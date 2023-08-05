@@ -1,88 +1,5 @@
 #include <Arduino.h>
 
-/*#include <SPI.h>
-
-int CS_pin = D6;
-int DREQ_pin = D2;
-byte received;
-
-void setup()
-{
-    Serial.begin(115200);
-    Serial.println("\nCiao");
-
-    pinMode(CS_pin, OUTPUT);
-    pinMode(DREQ_pin, INPUT);
-
-    SPI.begin();
-    SPI.setBitOrder(MSBFIRST);
-    //CPOL = 0, CPHA = 1
-    //see Serial Peripheral Interface - Wikipedia
-    //and decoder chip datasheet
-    SPI.setDataMode(SPI_MODE1);
-    //max SDI clock freq = CLKI/7 and (datasheet) CLKI = 36.864, hence max clock = 5MHz
-    //SPI clock arduino = 16MHz. 16/ 4 = 4MHz -- ok!
-    SPI.setClockDivider(SPI_CLOCK_DIV4);
-}
-
-void loop()
-{
-    Serial.println("Here1");
-    digitalWrite(CS_pin, HIGH);
-    delay(5);
-
-    // CHIP Write
-    // sets sci_mode register, SM_SDINEW, SM_SDISHARE, SM_TESTS. pg 25, 26
-    Serial.println("Here2");
-    byte aux;
-    digitalWrite(CS_pin, LOW);
-    delay(1);
-    SPI.transfer(0x02); //write command
-    SPI.transfer(0x00); //SDI_MODE register
-    //extract and send higher byte of data
-    aux = 0x0c20 >> 8;
-    SPI.transfer(aux);
-    //extract and send lower byte of data
-    aux = 0x0c20 & 0b11111111;
-    SPI.transfer(aux);
-    //wait for the chip to finish executing command
-    Serial.println("Here3");
-    while (!digitalRead(DREQ_pin)){};
-    digitalWrite(CS_pin, HIGH);
-    delay(1);
-    Serial.println("Here4");
-
-    // Start SINE test
-    digitalWrite(CS_pin, HIGH);
-    delay(1);
-    SPI.transfer(0x53);
-    SPI.transfer(0xEF);
-    SPI.transfer(0x6E);
-    SPI.transfer(0xAA); // 44100 Hz test tone frequency (pg 35)
-    SPI.transfer(0);
-    SPI.transfer(0);
-    SPI.transfer(0);
-    SPI.transfer(0);
-    Serial.println("Here5");
-
-    delay(200);
-
-    // EXIT SINE test
-    digitalWrite(CS_pin, HIGH);
-    delay(1);
-    SPI.transfer(0x45);
-    SPI.transfer(0x78);
-    SPI.transfer(0x69);
-    SPI.transfer(0x74);
-    SPI.transfer(0);
-    SPI.transfer(0);
-    SPI.transfer(0);
-    SPI.transfer(0);
-    Serial.println("Here6");
-
-    delay(200);
-}*/
-
 #include <VS1053.h>
 
 unsigned char sampleMp3[] = {
@@ -181,9 +98,9 @@ unsigned char sampleMp3[] = {
 
 // Wiring of VS1053 board (SPI connected in a standard way)
 #ifdef ARDUINO_ARCH_ESP8266
-#define VS1053_CS     D8 // D1
-#define VS1053_DCS    D1 // D0
-#define VS1053_DREQ   D2 // D3
+#define VS1053_CS     D1
+#define VS1053_DCS    D0
+#define VS1053_DREQ   D3
 #endif
 
 #ifdef ARDUINO_ARCH_ESP32
@@ -212,8 +129,11 @@ void setup() {
     // if (player.getChipVersion() == 4) { // Only perform an update if we really are using a VS1053, not. eg. VS1003
     //     player.loadDefaultVs1053Patches();
     // }
+    Serial.println("begin done");
     player.switchToMp3Mode(); // optional, some boards require this
+    Serial.println("switchToMp3Mode done");
     player.setVolume(VOLUME);
+    Serial.println("HEREEE");
 }
 
 void loop() {
