@@ -1,5 +1,6 @@
 #include <VS1053.h>
 #include "wifi.hpp"
+#include "eeprom.hpp"
 #include "circular_buffer.hpp"
 
 #ifdef ARDUINO_ARCH_ESP8266
@@ -21,14 +22,9 @@
 
 VS1053 player(VS1053_CS, VS1053_DCS, VS1053_DREQ);
 
-// WiFi settings example, substitute your own
-const char *ssid = "SSID";
-const char *password = "PASSWORD";
-
-//  http://comet.shoutca.st:8563/1
-const char *host = "cast.radioala.it";
-const char *path = "/stream";
-int httpPort = 8000;
+// const char *host = "cast.radioala.it";
+// const char *path = "/stream";
+// int httpPort = 8000;
 // const char *host = "velluto.radioala.it";
 // const char *path = "/listen/radio_ala/radio.mp3";
 // int httpPort = 80;
@@ -40,10 +36,27 @@ int httpPort = 8000;
 char buf_mp3_data[32768];
 CircularBuffer buf_mp3{buf_mp3_data, sizeof(buf_mp3_data), 64};
 
+constexpr int eeprom_addr_ssid = 0;
+constexpr int eeprom_addr_password = 32;
+constexpr int eeprom_addr_port = 96;
+constexpr int eeprom_addr_host = 128;
+constexpr int eeprom_addr_path = 256;
+char buf_ssid[33]; // SSID max length is 32
+char buf_password[65]; // password max length is 64
+int buf_port; // hold the port (an int is 4 bytes usually)
+char buf_host[129]; // hold a host of 128 bytes
+char buf_path[257]; // hold a path of 256 bytes
+
 
 void connectWifiOrStartHotspot() {
-    if (connectWifi(ssid, password)) {
-        connectWifiClient(host, httpPort, path);
+    readFromEEPROM(eeprom_addr_ssid, buf_ssid, sizeof(buf_ssid));
+    readFromEEPROM(eeprom_addr_password, buf_password, sizeof(buf_password));
+
+    if (connectWifi(buf_ssid, buf_password)) {
+        readFromEEPROM(eeprom_addr_port, buf_port);
+        readFromEEPROM(eeprom_addr_host, buf_host, sizeof(buf_host));
+        readFromEEPROM(eeprom_addr_path, buf_path, sizeof(buf_path));
+        connectWifiClient(buf_host, buf_port, buf_path);
         return;
     }
 
@@ -55,6 +68,7 @@ void connectWifiOrStartHotspot() {
 void setup() {
     int timeBeginning = millis();
     Serial.begin(115200);
+    beginEEPROM();
 
     // This can be set in the IDE no need for ext library
     // system_update_cpu_freq(160);
@@ -76,7 +90,7 @@ void setup() {
 
 int i=0;
 void loop() {
-    reconnectWifiClientIfNeeded(host, httpPort, path);
+    reconnectWifiClientIfNeeded(buf_host, buf_port, buf_path);
 
     if (buf_mp3.writeMaxCount() > 0 && availableInWifiClient() > 0) {
         readFromWifiClient(buf_mp3.writeAddress(), buf_mp3.writeMaxCount());
