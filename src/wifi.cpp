@@ -23,7 +23,7 @@ bool connectWifi(const char* ssid, const char* password) {
         if (status == WL_CONNECTED) {
             break;
         } else if (status != WL_IDLE_STATUS && status != WL_DISCONNECTED) {
-            Serial.print("Connection failed, status: ");
+            Serial.print("\nConnection failed, status: ");
             Serial.println(status);
             return false;
         }

@@ -157,7 +157,11 @@ void setup() {
 
     SPI.begin();
     player.begin();
-    Serial.print("Loading patches... ");
+    if (!player.isChipConnected()) {
+        Serial.println("VS1053 chip is not connected correctly!");
+    }
+
+    Serial.print("Loading VS1053 patches... ");
     player.loadDefaultVs1053Patches();
     Serial.println("Done!");
     player.switchToMp3Mode();
