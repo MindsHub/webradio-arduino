@@ -53,6 +53,7 @@
 */
 
 #include <VS1053.h>
+#include <EEPROM.h>
 
 #ifdef ARDUINO_ARCH_ESP8266
 #include <ESP8266WiFi.h>
@@ -69,23 +70,46 @@
 #endif
 
 // Default volume
-#define VOLUME  80
+#define VOLUME  100
 
 VS1053 player(VS1053_CS, VS1053_DCS, VS1053_DREQ);
 WiFiClient client;
 
 // WiFi settings example, substitute your own
-const char *ssid = "SSID";
-const char *password = "PASSWORD";
+// const char *ssid = "SSID";
+// const char *password = "PASSWORD";
 
 //  http://comet.shoutca.st:8563/1
-const char *host = "velluto.radioala.it";
-const char *path = "/listen/radio_ala/radio.mp3";
-int httpPort = 80;
+const char *host = "cast.radioala.it";
+const char *path = "/stream";
+int httpPort = 8000;
+// const char *host = "velluto.radioala.it";
+// const char *path = "/listen/radio_ala/radio.mp3";
+// int httpPort = 80;
+// const char *host = "icestreaming.rai.it";
+// const char *path = "/1.mp3";
+// int httpPort = 80;
 
+constexpr size_t buf_size = 32768;
 // The buffer size 64 seems to be optimal. At 32 and 128 the sound might be brassy.
-constexpr size_t buf_size = 64;
-uint8_t mp3buff[buf_size];
+constexpr size_t chunk_size = 64;
+size_t buf_start = 0;
+size_t buf_count = 0;
+uint8_t buf_mp3[buf_size];
+
+constexpr size_t eeprom_buf_size = 128;
+char buf_ssid[eeprom_buf_size];
+char buf_password[eeprom_buf_size];
+
+void connect() {
+    if (client.connect(host, httpPort)) {
+        client.print(String("GET ") + path + " HTTP/1.0\r\n" +
+                        "Host: " + host + "\r\n" +
+                        "Connection: close\r\n\r\n");
+    } else {
+        Serial.println("Connection failed");
+    }
+}
 
 void setup() {
     Serial.begin(115200);
@@ -102,54 +126,49 @@ void setup() {
     SPI.begin();
 
     player.begin();
-    /*if (player.getChipVersion() == 4) { // Only perform an update if we really are using a VS1053, not. eg. VS1003
-        player.loadDefaultVs1053Patches();
-    }*/
+    Serial.print("Loading patches... ");
+    player.loadDefaultVs1053Patches();
+    Serial.println("Done!");
     player.switchToMp3Mode();
     player.setVolume(VOLUME);
-
-    Serial.print("Connecting to SSID ");
-    Serial.println(ssid);
-    WiFi.begin(ssid, password);
-
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
 
     Serial.println("WiFi connected");
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
 
-    Serial.print("connecting to ");
+    Serial.print("Connecting to ");
     Serial.println(host);
 
-    if (!client.connect(host, httpPort)) {
-        Serial.println("Connection failed");
-        return;
-    }
+    connect();
 
-    Serial.print("Requesting stream: ");
+    Serial.print("Requested stream: ");
     Serial.println(path);
-
-    client.print(String("GET ") + path + " HTTP/1.1\r\n" +
-                 "Host: " + host + "\r\n" +
-                 "Connection: close\r\n\r\n");
 }
 
+int i=0;
 void loop() {
     if (!client.connected()) {
         Serial.println("Reconnecting...");
-        if (client.connect(host, httpPort)) {
-            client.print(String("GET ") + path + " HTTP/1.1\r\n" +
-                         "Host: " + host + "\r\n" +
-                         "Connection: close\r\n\r\n");
+        connect();
+    }
+
+    if (buf_count < buf_size && client.available() > 0) {
+        size_t bytestoread = (buf_start + buf_count >= buf_size) ? (buf_size - buf_count) : (buf_size - buf_start - buf_count);
+        size_t bytesread = client.read(buf_mp3 + ((buf_start + buf_count) % buf_size), bytestoread);
+        buf_count += bytesread;
+        if (buf_count > buf_size) {
+            Serial.println("Impossible situation, client read more bytes than requested");
         }
     }
 
-    if (client.available() > 0) {
-        // The buffer size 64 seems to be optimal. At 32 and 128 the sound might be brassy.
-        uint8_t bytesread = client.read(mp3buff, buf_size);
-        player.playChunk(mp3buff, bytesread);
+    if (++i % 1024 == 0)
+        Serial.println(buf_count);
+
+    if (buf_count >= chunk_size) {
+        // chunk_size divides buf_size, so we don't need to check for circular buffer bounds
+        player.playChunk(buf_mp3 + buf_start, chunk_size);
+        buf_count -= chunk_size;
+        buf_start += chunk_size;
+        buf_start %= buf_size;
     }
 }
