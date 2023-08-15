@@ -52,12 +52,18 @@ char buf_path[257]; // hold a path of 256 bytes
 constexpr const char* AP_ssid = "Riproduttore RadioALA";
 
 
+void saveString(String s, char* buffer, size_t size, int eepromAddress) {
+    memcpy(buffer, s.c_str(), s.length());
+    memset(buffer + s.length(), 0, size - s.length());
+    saveToEEPROM(eepromAddress, buffer, size);
+}
+
 void connectWifiOrStartHotspot() {
     readFromEEPROM(eeprom_addr_ssid, buf_ssid, sizeof(buf_ssid));
     readFromEEPROM(eeprom_addr_password, buf_password, sizeof(buf_password));
 
     if (connectWifi(buf_ssid, buf_password)) {
-        readFromEEPROM(eeprom_addr_port, buf_port);
+        readFromEEPROM(eeprom_addr_port, &buf_port);
         readFromEEPROM(eeprom_addr_host, buf_host, sizeof(buf_host));
         readFromEEPROM(eeprom_addr_path, buf_path, sizeof(buf_path));
         connectWifiClient(buf_host, buf_port, buf_path);
@@ -73,11 +79,58 @@ void connectWifiOrStartHotspot() {
         });
 
         server.on("/wifi", HTTP_POST, [](AsyncWebServerRequest *request){
-            request->send(200, "text/plain", "Hello, world 1");
+            constexpr const char* PARAM_SSID = "ssid", * PARAM_PASSWORD = "password";
+            if (!request->hasParam(PARAM_SSID, true) || !request->hasParam(PARAM_PASSWORD, true)) {
+                request->send(400);
+                return;
+            }
+
+            String ssid = request->getParam(PARAM_SSID, true)->value();
+            String password = request->getParam(PARAM_PASSWORD, true)->value();
+            if (ssid.length() >= sizeof(buf_ssid) || password.length() >= sizeof(buf_password)) {
+                request->send(422);
+                return;
+            }
+
+            saveString(ssid, buf_ssid, sizeof(buf_ssid), eeprom_addr_ssid);
+            saveString(password, buf_password, sizeof(buf_password), eeprom_addr_password);
+
+            request->send(200);
         });
 
         server.on("/radio", HTTP_POST, [](AsyncWebServerRequest *request){
-            request->send(200, "text/plain", "Hello, world 2");
+            constexpr const char* PARAM_HOST = "host", * PARAM_PORT = "port", * PARAM_PATH = "path";
+            if (!request->hasParam(PARAM_HOST, true) || !request->hasParam(PARAM_PORT, true) ||
+                    !request->hasParam(PARAM_PATH, true)) {
+                request->send(400);
+                return;
+            }
+
+            String host = request->getParam(PARAM_HOST, true)->value();
+            String port = request->getParam(PARAM_PORT, true)->value();
+            String path = request->getParam(PARAM_PATH, true)->value();
+            if (host.length() >= sizeof(buf_host) || port.length() > 5 || path.length() >= sizeof(buf_path)) {
+                request->send(422);
+                return;
+            }
+
+            long portInt = port.toInt();
+            if (portInt <= 0 || portInt >= 65536) {
+                request->send(422);
+                return;
+            }
+
+            saveString(host, buf_host, sizeof(buf_host), eeprom_addr_host);
+            saveString(path, buf_path, sizeof(buf_path), eeprom_addr_path);
+            buf_port = portInt;
+            saveToEEPROM(eeprom_addr_port, buf_port);
+
+            request->send(200);
+        });
+
+        server.on("/restart", HTTP_POST, [](AsyncWebServerRequest *request){
+            request->send(200);
+            ESP.restart();
         });
 
         server.begin();
@@ -116,7 +169,8 @@ void loop() {
     reconnectWifiClientIfNeeded(buf_host, buf_port, buf_path);
 
     if (buf_mp3.writeMaxCount() > 0 && availableInWifiClient() > 0) {
-        readFromWifiClient(buf_mp3.writeAddress(), buf_mp3.writeMaxCount());
+        int written = readFromWifiClient(buf_mp3.writeAddress(), buf_mp3.writeMaxCount());
+        buf_mp3.advanceWritten(written);
     }
 
     if (++i % 1024 == 0) {

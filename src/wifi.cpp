@@ -16,12 +16,13 @@ bool connectWifi(const char* ssid, const char* password) {
     Serial.print("Connecting to SSID: ");
     Serial.println(ssid);
 
+    WiFi.mode(WIFI_STA);
     wl_status_t status = WiFi.begin(ssid, password);
 
     while (true) {
         if (status == WL_CONNECTED) {
             break;
-        } else if (status != WL_IDLE_STATUS) {
+        } else if (status != WL_IDLE_STATUS && status != WL_DISCONNECTED) {
             Serial.print("Connection failed, status: ");
             Serial.println(status);
             return false;
@@ -39,7 +40,9 @@ bool connectWifi(const char* ssid, const char* password) {
 
 void connectWifiClient(const char* host, int httpPort, const char* path) {
     Serial.print("Connecting to host: ");
-    Serial.println(host);
+    Serial.print(host);
+    Serial.print(':');
+    Serial.println(httpPort);
 
     if (client.connect(host, httpPort)) {
         Serial.print("Requesting stream: ");
@@ -53,6 +56,7 @@ void connectWifiClient(const char* host, int httpPort, const char* path) {
 
     } else {
         Serial.println("Connection failed");
+        delay(1000);
     }
 }
 
@@ -75,6 +79,7 @@ int readFromWifiClient(char* buffer, size_t size) {
 bool turnOnWifiAP(const char* ssid, const char* password) {
     Serial.print("Starting Wifi hotspot at SSID: ");
     Serial.println(ssid);
+    WiFi.mode(WIFI_AP);
     if (!WiFi.softAP(ssid, password)) {
         Serial.println("Could not start hotspot!");
         return false;
