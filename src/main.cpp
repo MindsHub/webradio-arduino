@@ -2,6 +2,7 @@
 #include "wifi.hpp"
 #include "eeprom.hpp"
 #include "circular_buffer.hpp"
+#include "static_resources.hpp"
 
 #ifdef ARDUINO_ARCH_ESP8266
 #include <ESPAsyncTCP.h>
@@ -75,7 +76,7 @@ void connectWifiOrStartHotspot() {
         AsyncWebServer server(80);
 
         server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-            request->send(200, "text/plain", "Hello, world");
+            request->send(200, "text/html", homePageHtml);
         });
 
         server.on("/wifi", HTTP_POST, [](AsyncWebServerRequest *request){
