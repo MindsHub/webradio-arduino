@@ -4,11 +4,13 @@
 #include "circular_buffer.hpp"
 
 #ifdef ARDUINO_ARCH_ESP8266
+#include <ESPAsyncTCP.h>
 #define VS1053_CS     D1
 #define VS1053_DCS    D0
 #define VS1053_DREQ   D3
 #else
 #ifdef ARDUINO_ARCH_ESP32
+#include <AsyncTCP.h>
 #define VS1053_CS     5
 #define VS1053_DCS    16
 #define VS1053_DREQ   4
@@ -16,10 +18,10 @@
 #error Unsupported board
 #endif
 #endif
+#include <ESPAsyncWebServer.h>
 
-// Default volume
-#define VOLUME  100
 
+constexpr uint8_t volume = 100; // default to max volume
 VS1053 player(VS1053_CS, VS1053_DCS, VS1053_DREQ);
 
 // const char *host = "cast.radioala.it";
@@ -32,8 +34,8 @@ VS1053 player(VS1053_CS, VS1053_DCS, VS1053_DREQ);
 // const char *path = "/1.mp3";
 // int httpPort = 80;
 
-// The chunk size os 64 seems to be optimal. At 32 and 128 the sound might be brassy.
-char buf_mp3_data[32768];
+// The chunk size of 64 seems to be optimal. At 32 and 128 the sound might be brassy.
+char buf_mp3_data[16384];
 CircularBuffer buf_mp3{buf_mp3_data, sizeof(buf_mp3_data), 64};
 
 constexpr int eeprom_addr_ssid = 0;
@@ -46,6 +48,8 @@ char buf_password[65]; // password max length is 64
 int buf_port; // hold the port (an int is 4 bytes usually)
 char buf_host[129]; // hold a host of 128 bytes
 char buf_path[257]; // hold a path of 256 bytes
+
+constexpr const char* AP_ssid = "Riproduttore RadioALA";
 
 
 void connectWifiOrStartHotspot() {
@@ -61,8 +65,27 @@ void connectWifiOrStartHotspot() {
     }
 
     // connecting to the Wifi network failed, open the hotspot
-    // TODO
-    while(true) delay(1000);
+    if (turnOnWifiAP(AP_ssid, nullptr)) {
+        AsyncWebServer server(80);
+
+        server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+            request->send(200, "text/plain", "Hello, world");
+        });
+
+        server.on("/wifi", HTTP_POST, [](AsyncWebServerRequest *request){
+            request->send(200, "text/plain", "Hello, world 1");
+        });
+
+        server.on("/radio", HTTP_POST, [](AsyncWebServerRequest *request){
+            request->send(200, "text/plain", "Hello, world 2");
+        });
+
+        server.begin();
+
+        while (true) delay(100000);
+    } else {
+        while (true) delay(100000);
+    }
 }
 
 void setup() {
@@ -85,10 +108,10 @@ void setup() {
     player.loadDefaultVs1053Patches();
     Serial.println("Done!");
     player.switchToMp3Mode();
-    player.setVolume(VOLUME);
+    player.setVolume(volume);
 }
 
-int i=0;
+int i = 0;
 void loop() {
     reconnectWifiClientIfNeeded(buf_host, buf_port, buf_path);
 

@@ -70,3 +70,14 @@ int availableInWifiClient() {
 int readFromWifiClient(char* buffer, size_t size) {
     return client.read(buffer, size);
 }
+
+
+bool turnOnWifiAP(const char* ssid, const char* password) {
+    Serial.print("Starting Wifi hotspot at SSID: ");
+    Serial.println(ssid);
+    if (!WiFi.softAP(ssid, password)) {
+        Serial.println("Could not start hotspot!");
+        return false;
+    }
+    return true;
+}

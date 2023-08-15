@@ -11,4 +11,6 @@ void reconnectWifiClientIfNeeded(const char* host, int httpPort, const char* pat
 int availableInWifiClient();
 int readFromWifiClient(char* buffer, size_t size);
 
+bool turnOnWifiAP(const char* ssid, const char* password);
+
 #endif // _WIFI_HPP_

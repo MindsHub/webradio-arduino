@@ -51,10 +51,11 @@ char* CircularBuffer::advanceChunk() {
     }
 
     // chunk_size divides buf_size, so we don't need to check for circular buffer bounds
-    const char* result = buffer + start;
+    char* result = buffer + start;
     count -= chunk_size;
     start += chunk_size;
     start %= size;
+    return result;
 }
 
 size_t CircularBuffer::chunkSize() {
