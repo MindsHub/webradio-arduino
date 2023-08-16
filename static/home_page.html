@@ -1,9 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Riproduttore RadioALA</title>
+    <title>RadioALA player</title>
 </head>
 <body>
-    <h1>Riproduttore RadioALA</h1>
+    <h1>RadioALA player</h1>
+    <button>Clicca per riavviare e applicare i cambiamenti</button>
+    <br/>
+    <br/>
+    <br/>
+    <label for="ssid">SSID/nome WiFi:</label>
+    <input type="text" id="ssid">
+    <br/>
+    <sup>Attento agli spazi!</sup>
+    <br/>
+    <label for="password">Password WiFi:</label>
+    <input type="password" id="password">
+    <br/>
+    <button>Clicca per cambiare WiFi</button>
+    <br/>
+    <br/>
+    <br/>
+    <label for="url">Url radio:</label>
+    <input type="text" id="host" list="presets">
+    <datalist id="presets">
+        <option value="RadioALA - cast.radioala.it:8000/stream">
+        <option value="RadioALA velluto - velluto.radioala.it/listen/radio_ala/radio.mp3">
+    </datalist>
+    <br/>
+    <sup><code>https</code> non è supportato</sup>
+    <br/>
+    <button>Clicca per cambiare radio</button>
 </body>
 </html>
