@@ -2,10 +2,54 @@
 <html>
 <head>
     <title>RadioALA player</title>
+    <script>
+        function postRequest(url, data) {
+            const formData = new FormData();
+            for (name in data) {
+                formData.append(name, data[name]);
+            }
+            console.log(data)
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+            });
+        }
+
+        function restart() {
+            fetch('/restart', { method: 'POST' });
+        }
+
+        function wifi() {
+            postRequest('/wifi', {
+                ssid: document.getElementById('ssid').value,
+                password: document.getElementById('password').value,
+            });
+        }
+
+        function radio() {
+            try {
+                host = document.getElementById('host').value;
+                if (!host.startsWith("http")) {
+                    host = "http://" + host;
+                }
+
+                radioUrl = new URL(host);
+            } catch (e) {
+                document.getElementById('host_error').innerText = e.message;
+                return;
+            }
+
+            postRequest('/radio', {
+                host: radioUrl.hostname,
+                port: radioUrl.port,
+                path: radioUrl.pathname + radioUrl.search,
+            });
+        }
+    </script>
 </head>
 <body>
     <h1>RadioALA player</h1>
-    <button>Clicca per riavviare e applicare i cambiamenti</button>
+    <button onclick="restart()">Clicca per riavviare e applicare i cambiamenti</button>
     <br/>
     <br/>
     <br/>
@@ -17,19 +61,22 @@
     <label for="password">Password WiFi:</label>
     <input type="password" id="password">
     <br/>
-    <button>Clicca per cambiare WiFi</button>
+    <button onclick="wifi()">Clicca per cambiare WiFi</button>
     <br/>
     <br/>
     <br/>
-    <label for="url">Url radio:</label>
-    <input type="text" id="host" list="presets">
-    <datalist id="presets">
-        <option value="RadioALA - cast.radioala.it:8000/stream">
-        <option value="RadioALA velluto - velluto.radioala.it/listen/radio_ala/radio.mp3">
-    </datalist>
+    <label for="host">Url radio:</label>
+    <input type="text" id="host">
     <br/>
-    <sup><code>https</code> non è supportato</sup>
+    <label for="presets">Preimpostazioni:</label>
+    <select id="presets" autocomplete="off" onchange="document.getElementById('host').value = this.value">
+        <option disabled selected hidden>Seleziona</option>
+        <option value="cast.radioala.it:8000/stream">RadioALA</option>
+        <option value="velluto.radioala.it/listen/radio_ala/radio.mp3">RadioALA velluto</option>
+    </select>
     <br/>
-    <button>Clicca per cambiare radio</button>
+    <sup id="host_error"><code>https</code> non è supportato</sup>
+    <br/>
+    <button onclick="radio()">Clicca per cambiare radio</button>
 </body>
 </html>
