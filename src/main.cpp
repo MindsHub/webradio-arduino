@@ -25,16 +25,6 @@
 constexpr uint8_t volume = 100; // default to max volume
 VS1053 player(VS1053_CS, VS1053_DCS, VS1053_DREQ);
 
-// const char *host = "cast.radioala.it";
-// const char *path = "/stream";
-// int httpPort = 8000;
-// const char *host = "velluto.radioala.it";
-// const char *path = "/listen/radio_ala/radio.mp3";
-// int httpPort = 80;
-// const char *host = "icestreaming.rai.it";
-// const char *path = "/1.mp3";
-// int httpPort = 80;
-
 char buf_mp3_data[16384];
 // The chunk size of 64 seems to be optimal. At 32 and 128 the sound might be brassy.
 CircularBuffer buf_mp3{buf_mp3_data, sizeof(buf_mp3_data), 64};
