@@ -3,47 +3,58 @@
 <head>
     <title>RadioALA player</title>
     <script>
-        function postRequest(url, data) {
+        function postRequest(result_elem, url, data) {
             const formData = new FormData();
             for (name in data) {
                 formData.append(name, data[name]);
             }
-            console.log(data)
+
+            result_elem.innerText = "..."
             fetch(url, {
-                method: 'POST',
+                method: "POST",
                 body: formData,
-            });
+            })
+                .then((resp) => {
+                    if (resp.ok) {
+                        result_elem.innerText = "Fatto!";
+                    } else {
+                        result_elem.innerText = "Errore " + resp.status + ": " + resp.statusText
+                    }
+                })
+                .catch((e) => result_elem.innerText = e.message)
         }
 
         function restart() {
-            fetch('/restart', { method: 'POST' });
+            fetch("/restart", { method: "POST" })
+                .catch((e) => document.body.innerHTML = "<h1>Riavvio effettuato</h1>")
         }
 
         function wifi() {
-            postRequest('/wifi', {
-                ssid: document.getElementById('ssid').value,
-                password: document.getElementById('password').value,
+            postRequest(document.getElementById("wifi_result"), "/wifi", {
+                ssid: document.getElementById("ssid").value,
+                password: document.getElementById("password").value,
             });
         }
 
         function radio() {
+            result_elem = document.getElementById("radio_result")
             try {
-                host = document.getElementById('host').value;
+                host = document.getElementById("radio").value;
                 if (!host.startsWith("http")) {
                     host = "http://" + host;
                 }
 
                 radioUrl = new URL(host);
             } catch (e) {
-                document.getElementById('host_error').innerText = e.message;
+                result_elem.innerText = e.message;
                 return;
             }
 
-            postRequest('/radio', {
+            postRequest(result_elem, "/radio", {
                 host: radioUrl.hostname,
                 port: radioUrl.port,
                 path: radioUrl.pathname + radioUrl.search,
-            });
+            })
         }
     </script>
 </head>
@@ -63,20 +74,23 @@
     <br>
     <button onclick="wifi()">Clicca per cambiare WiFi</button>
     <br>
+    <sup id="wifi_result"></sup>
     <br>
     <br>
-    <label for="host">Url radio:</label>
-    <input type="text" id="host">
+    <label for="radio">Url radio:</label>
+    <input type="text" id="radio">
     <br>
     <label for="presets">Preimpostazioni:</label>
-    <select id="presets" autocomplete="off" onchange="document.getElementById('host').value = this.value">
+    <select id="presets" autocomplete="off" onchange="document.getElementById('radio').value = this.value">
         <option disabled selected hidden>Seleziona</option>
         <option value="cast.radioala.it:8000/stream">RadioALA</option>
         <option value="velluto.radioala.it/listen/radio_ala/radio.mp3">RadioALA velluto</option>
     </select>
     <br>
-    <sup id="host_error"><code>https</code> non &egrave; supportato</sup>
+    <sup><code>https</code> non &egrave; supportato</sup>
     <br>
     <button onclick="radio()">Clicca per cambiare radio</button>
+    <br>
+    <sup id="radio_result"></sup>
 </body>
 </html>

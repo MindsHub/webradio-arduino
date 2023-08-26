@@ -120,7 +120,7 @@ void connectWifiOrStartHotspot() {
         });
 
         server.on("/restart", HTTP_POST, [](AsyncWebServerRequest *request){
-            request->send(200);
+            // do not send any response, it would not really be sent anyway
             ESP.restart();
         });
 
