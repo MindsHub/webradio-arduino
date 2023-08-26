@@ -52,7 +52,7 @@
 
             postRequest(result_elem, "/radio", {
                 host: radioUrl.hostname,
-                port: radioUrl.port,
+                port: radioUrl.port || 80,
                 path: radioUrl.pathname + radioUrl.search,
             })
         }
