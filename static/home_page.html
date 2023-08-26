@@ -50,33 +50,33 @@
 <body>
     <h1>RadioALA player</h1>
     <button onclick="restart()">Clicca per riavviare e applicare i cambiamenti</button>
-    <br/>
-    <br/>
-    <br/>
+    <br>
+    <br>
+    <br>
     <label for="ssid">SSID/nome WiFi:</label>
     <input type="text" id="ssid">
-    <br/>
+    <br>
     <sup>Attento agli spazi!</sup>
-    <br/>
+    <br>
     <label for="password">Password WiFi:</label>
     <input type="password" id="password">
-    <br/>
+    <br>
     <button onclick="wifi()">Clicca per cambiare WiFi</button>
-    <br/>
-    <br/>
-    <br/>
+    <br>
+    <br>
+    <br>
     <label for="host">Url radio:</label>
     <input type="text" id="host">
-    <br/>
+    <br>
     <label for="presets">Preimpostazioni:</label>
     <select id="presets" autocomplete="off" onchange="document.getElementById('host').value = this.value">
         <option disabled selected hidden>Seleziona</option>
         <option value="cast.radioala.it:8000/stream">RadioALA</option>
         <option value="velluto.radioala.it/listen/radio_ala/radio.mp3">RadioALA velluto</option>
     </select>
-    <br/>
-    <sup id="host_error"><code>https</code> non è supportato</sup>
-    <br/>
+    <br>
+    <sup id="host_error"><code>https</code> non &egrave; supportato</sup>
+    <br>
     <button onclick="radio()">Clicca per cambiare radio</button>
 </body>
 </html>
