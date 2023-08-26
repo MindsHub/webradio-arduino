@@ -34,7 +34,7 @@ for varname, filename in variables:
     with open(filename) as f:
         content = f.read()
     if filename.endswith(".html"):
-        content = minify_html.minify(content)
+        content = minify_html.minify(content, do_not_minify_doctype=True, minify_js=True)
 
     res += f"const char * {varname} PROGMEM = R\"{RAW_STRING_WRAPPER}({content}){RAW_STRING_WRAPPER}\";\n"
 
