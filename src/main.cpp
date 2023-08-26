@@ -147,9 +147,6 @@ void setup() {
     Serial.begin(115200);
     beginEEPROM();
 
-    // This can be set in the IDE no need for ext library
-    // system_update_cpu_freq(160);
-
     connectWifiOrStartHotspot();
 
     if (int remainingTime = 3000 - (millis() - timeBeginning); remainingTime > 0) {
