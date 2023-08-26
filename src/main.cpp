@@ -135,6 +135,7 @@ void connectWifiOrStartHotspot() {
 void setup() {
     int timeBeginning = millis();
     Serial.begin(115200);
+    Serial.println("\n\nStartup");
     beginEEPROM();
 
     connectWifiOrStartHotspot();
