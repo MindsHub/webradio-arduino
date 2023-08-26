@@ -35,8 +35,8 @@ VS1053 player(VS1053_CS, VS1053_DCS, VS1053_DREQ);
 // const char *path = "/1.mp3";
 // int httpPort = 80;
 
-// The chunk size of 64 seems to be optimal. At 32 and 128 the sound might be brassy.
 char buf_mp3_data[16384];
+// The chunk size of 64 seems to be optimal. At 32 and 128 the sound might be brassy.
 CircularBuffer buf_mp3{buf_mp3_data, sizeof(buf_mp3_data), 64};
 
 constexpr int eeprom_addr_ssid = 0;
@@ -76,7 +76,7 @@ void connectWifiOrStartHotspot() {
         AsyncWebServer server(80);
 
         server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-            request->send(200, "text/html", homePageHtml);
+            request->send_P(200, "text/html", homePageHtml);
         });
 
         server.on("/wifi", HTTP_POST, [](AsyncWebServerRequest *request){
